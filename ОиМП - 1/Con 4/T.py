@@ -1,0 +1,5 @@
+str = input()
+pos1 = str.find("h")
+pos2 = str.rfind("h")
+new_str = str.replace("h", "H", str.count("h") - 1)
+print(new_str.replace("H", "h", 1))

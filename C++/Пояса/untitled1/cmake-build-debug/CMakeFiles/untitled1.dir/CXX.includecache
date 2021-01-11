@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/d/HSE/C++/Пояса/untitled1/main.cpp
+iostream
+-
+algorithm
+-
+string
+-
+fstream
+-
+iomanip
+-
+set
+-
+map
+-
+exception
+-
+vector
+-
+

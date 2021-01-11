@@ -1,0 +1,147 @@
+#pragma GCC target("sse", "sse2")
+#pragma GCC optimize("O3")
+
+#include <iostream>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <random>
+#include <chrono>
+#include <climits>
+
+#define int long long
+#define double long double
+#define _ << ' ' <<
+#define For(i, z) for(int32_t i=0;i<int32_t(z);++i)
+#define sqr(a) ((a)*(a))
+
+using pii = std::pair<int, int>;
+using pdd = std::pair<double, double>;
+#define f first
+#define s second
+
+template <typename T> using orset = __gnu_pbds::tree<T, __gnu_pbds::null_type, std::less<T>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
+template <typename T, typename K> using ormap = __gnu_pbds::tree<T, K, std::less<T>, __gnu_pbds::rb_tree_tag, __gnu_pbds::tree_order_statistics_node_update>;
+template <typename T, typename... K> __always_inline void umax(T& a, K&&... b) { ((a = max(a, (T) b)), ...); }
+template <typename T, typename... K> __always_inline void umin(T& a, K&&... b) { ((a = min(a, (T) b)), ...); }
+std::mt19937 rnd(std::chrono::steady_clock::now().time_since_epoch().count());
+std::uniform_real_distribution<> rndre(0, 1);
+
+const int32_t N = 1010;
+const int64_t INF = 1e16;
+const std::pair<int64_t, int64_t> PINF = std::make_pair(INF, INF);
+const double EPS = 1e-7;
+//const int MOD = 1e9 + 123;
+const int II = 1e9 + 10;
+//const int64_t AMOD = 99194853094755497;
+const double PI = 3.14159265359;
+const int BUF = 1024*1024;
+
+const int MODULESCNT = 3;
+using ModTuple = std::tuple<int, int, int>;
+
+const int MOD[] = {(int)1e9+7, (int)1e9+9, (int)1e9+123};
+
+int pw[] = {29, 31, 37};
+
+//const int MOD[] = {(int)1e9+7, (int)1e9+7, (int)1e9+7};
+//
+//int pw[] = {31, 31, 31};
+int st[N * N][MODULESCNT];
+int n, m;
+std::vector<std::string> ar(N);
+int a, b;
+std::vector<std::string> mp(N);
+
+int hsPref[N][N][MODULESCNT];
+
+__always_inline int AtPoint(int y, int x, std::vector<std::string>& target, int hashNum) {
+    return (int)(target[y][x] - 'a' + 1) * st[y * m + x][hashNum] % MOD[hashNum];
+}
+
+__always_inline int GetAt(int y0, int x0, int y1, int x1, int hashNum) {
+    return (hsPref[y1][x1][hashNum] -
+                (x0 ? hsPref[y1][x0 - 1][hashNum] : 0LL) -
+                (y0 ? hsPref[y0 - 1][x1][hashNum] : 0LL) +
+                (x0 && y0 ? hsPref[y0 - 1][x0 - 1][hashNum] : 0LL) + MOD[hashNum] * 4)
+            % MOD[hashNum] * st[N * N - 1 - y0 * m - x0][hashNum] % MOD[hashNum];
+}
+
+__always_inline ModTuple GetAt(int y0, int x0, int y1, int x1) {
+    return {GetAt(y0, x0, y1, x1, 0),
+            GetAt(y0, x0, y1, x1, 1),
+            GetAt(y0, x0, y1, x1, 2)};
+}
+
+struct Hasher {
+    size_t operator()(const ModTuple& t) const {
+        return 1ull * std::get<0>(t) + std::get<1>(t) + std::get<2>(t);
+    }
+};
+
+__gnu_pbds::gp_hash_table<ModTuple, int, Hasher> hashCount;
+
+auto findIter(int (&hs)[MODULESCNT]) {
+    return hashCount.find({hs[0] * st[N * N - 1][0] % MOD[0],
+                           hs[1] * st[N * N - 1][1] % MOD[1],
+                           hs[2] * st[N * N - 1][2] % MOD[2]});
+}
+
+int32_t main() {
+    //freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+    freopen("find-lksh.in", "r", stdin);
+    freopen("find-lksh.out", "w", stdout);
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr); std::cout.tie(nullptr);
+
+    std::cin >> n >> m;
+    For (i, n) std::cin >> ar[i];
+    std::cin >> a >> b;
+    For (i, a) std::cin >> mp[i];
+
+    For (hashNum, MODULESCNT) {
+        st[0][hashNum] = 1;
+        For (i, N * N - 1) st[i+1][hashNum] = st[i][hashNum] * pw[hashNum] % MOD[hashNum];
+        For (i, n) For (j, m) hsPref[i][j][hashNum] = (AtPoint(i, j, ar, hashNum) +
+                                                      (i ? hsPref[i-1][j][hashNum] : 0LL) +
+                                                      (j ? hsPref[i][j-1][hashNum] : 0LL) -
+                                                      (i && j ? hsPref[i-1][j-1][hashNum] : 0LL) + MOD[hashNum]) % MOD[hashNum];
+    }
+
+    for (int i = 0; i + a <= n; ++i)
+        for (int j = 0; j + b <= m; ++j) {
+            ++hashCount[GetAt(i, j, i + a - 1, j + b - 1)];
+//            std::cout << "from" _ i _ j _ GetAt(i, j, i+a-1, j+b-1) << '\n';
+        }
+
+    int hsMp[MODULESCNT] = {0, 0, 0};
+    For (hashNum, MODULESCNT) For (i, a) For (j, b) hsMp[hashNum] = (hsMp[hashNum] + AtPoint(i, j, mp, hashNum)) % MOD[hashNum];
+//    for (int i : hsMp) std::cout << i << ' ';
+//    std::cout << '\n';
+
+//    for (auto &[i, zxc] : hashCount) {
+//        std::cout << std::get<0>(i) _ std::get<1>(i) _ std::get<2>(i) << '\n';
+//    }
+
+    auto iter = findIter(hsMp);
+    int ans = (iter == hashCount.end() ? 0LL : iter->second);
+//    if (ans) std::cout << "FOUND FIRST\n";
+    For (i, a) {
+        For (j, b) {
+            for (char c = 'a'; c <= 'z'; ++c) {
+                if (c == mp[i][j]) continue;
+                int curHs[MODULESCNT];
+                For (hashNum, MODULESCNT)
+                    curHs[hashNum] = (hsMp[hashNum] -
+                                      AtPoint(i, j, mp, hashNum) +
+                                      (int)(c - 'a' + 1) * st[i * m + j][hashNum] + MOD[hashNum]) % MOD[hashNum];
+
+                if (iter = findIter(curHs); iter != hashCount.end())
+                    ans += iter->second;
+//                std::cout << i _ j _ c _ curHs[0] << '\n';
+            }
+        }
+    }
+    std::cout << ans;
+}

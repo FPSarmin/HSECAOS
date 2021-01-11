@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/Yellow_belt.dir/main.cpp.o  -o Yellow_belt 
